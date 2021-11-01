@@ -1,3 +1,5 @@
+data "aws_availability_zones" "avaliable" {}
+
 variable "vpc_cidr" {
   default = "10.0.0.0/16"
 }

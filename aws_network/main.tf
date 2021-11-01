@@ -6,16 +6,18 @@ terraform {
   }
 }
 
-data "aws_availability_zones" "avaliable" {}
+
 
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
-
+  enable_dns_support = true
+  enable_dns_hostnames = true
   tags = {
     "Name" = "${var.env}-vpc"    
   }
 }
 
+# Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -29,7 +31,8 @@ resource "aws_internet_gateway" "main" {
 resource "aws_subnet" "public_subnets" {
   count = length(var.public_subnet_cidrs)
   vpc_id = aws_vpc.main.id
-  cidr_block = element(var.public_subnet_cidrs, count.index)
+  # cidr_block = element(var.public_subnet_cidrs, count.index)
+  cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index+1)
   availability_zone = data.aws_availability_zones.avaliable.names[count.index]
   map_public_ip_on_launch = true
 
@@ -87,8 +90,10 @@ resource "aws_nat_gateway" "nat" {
 resource "aws_subnet" "private_subnets" {
   count = length(var.private_subnet_cidrs)
   vpc_id = aws_vpc.main.id
-  cidr_block = element(var.private_subnet_cidrs, count.index)
+  # cidr_block = element(var.private_subnet_cidrs, count.index)
+  cidr_block = cidrsubnet(var.vpc_cidr, 8, count.index + 101)
   availability_zone = data.aws_availability_zones.avaliable.names[count.index]
+  map_public_ip_on_launch = false
   
   tags = {
     "Name" = "${var.env}-private-${count.index + 1}"
